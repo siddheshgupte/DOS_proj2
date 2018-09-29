@@ -40,7 +40,7 @@ defmodule Proj2 do
   end
 
   def handle_cast({:set_neighbours, list_of_neighbours}, current_map) do
-    {_,updated_map} = Map.get_and_update(current_map, :neighbour_list, fn x -> {x, list_of_neighbours} end)
+    {_,updated_map} = Map.get_and_update(current_map, :neighbour_list, fn x -> {x, x ++ list_of_neighbours} end)
     IO.inspect updated_map
     {:noreply, updated_map}
   end
