@@ -37,8 +37,32 @@ defmodule Application1 do
         end
 
     end
-        
-
+      
+    #for torus
+    def connect_horizontally(ip_lst) do
+        0..length(ip_lst)-1
+            |> Enum.to_list
+            |> Enum.each(fn x ->
+                  GenServer.cast(Enum.at(ip_lst, x),
+                  {:set_neighbours,
+                   Enum.filter([Enum.at(ip_lst, x-1), Enum.at(ip_lst, rem(x+1,length(ip_lst)) )], fn x -> x != nil end)} ) end)
+    end    
+    
+    def connect_vertically(list_of_lists) do
+            0..length(list_of_lists)-1
+            |> Enum.to_list
+            |> Enum.each(fn x ->
+                0..length(list_of_lists)-1
+                |> Enum.to_list
+                 |> Enum.each(fn y ->
+                  GenServer.cast(Enum.at(Enum.at(list_of_lists, x),y), {:set_neighbours, 
+                    #   [Enum.at(Enum.at(list_of_lists, x-step),y), Enum.at(Enum.at(list_of_lists,x+step), y)], 
+                    [Enum.at(Enum.at(list_of_lists, x-1),y),
+                      Enum.at(Enum.at(list_of_lists,rem(x+1,length(list_of_lists)) ), y)]    
+                      }) end)
+                 end)
+        end
+    
    
 
 # Start the application with the number of nodes
@@ -63,6 +87,7 @@ defmodule Application1 do
     # Get a list of children of the supervisor
     lst = Supervisor.which_children(supervisor)
         |> Enum.map(fn x -> elem(x, 0) end)
+     #   |>Enum.sort
 
     case topology do
         "full" ->            
@@ -91,6 +116,14 @@ defmodule Application1 do
                 Enum.each(list_of_lists, fn x -> connect_horizontally(x, step) end)
                 connect_vertically(list_of_lists,step)
             end
+        
+        "torus" ->
+            len = trunc(:math.sqrt(num_of_nodes))
+            list_of_lists = Enum.chunk_every(lst, len)   
+            Enum.each(list_of_lists, fn x -> connect_horizontally(x) end)
+            connect_vertically(list_of_lists)
+
+
 
     
     end
