@@ -17,7 +17,7 @@ defmodule Application1 do
     end    
 
     def connect_vertically(list_of_lists,step) do
-        step..length(list_of_lists)-step-1
+        0..length(list_of_lists)-1
         |> Enum.to_list
         |> Enum.each(fn x ->
             0..length(list_of_lists)-1
@@ -25,8 +25,10 @@ defmodule Application1 do
              |> Enum.each(fn y ->
               GenServer.cast(Enum.at(Enum.at(list_of_lists, x),y), {:set_neighbours, 
               Enum.filter(
-                  [Enum.at(Enum.at(list_of_lists, x-step),y), Enum.at(Enum.at(list_of_lists,x+step), y)], 
-                  fn x -> x != nil end)
+                #   [Enum.at(Enum.at(list_of_lists, x-step),y), Enum.at(Enum.at(list_of_lists,x+step), y)], 
+                [(if x-step >= 0, do: Enum.at(Enum.at(list_of_lists, x-step),y), else: nil),
+                 (if x+step < length(list_of_lists), do: Enum.at(Enum.at(list_of_lists,x+step), y), else: nil)],    
+                 fn x -> x != nil end)
                   }) end)
              end)
 
