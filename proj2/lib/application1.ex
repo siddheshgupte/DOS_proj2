@@ -6,11 +6,9 @@ defmodule Application1 do
     0..length(ip_lst)-1
         |> Enum.to_list
         |> Enum.each(fn x ->
-    #         1..step
-    #         |> Enum.to_list
-    #         |> Enum.each(fn y ->
-              GenServer.cast(Enum.at(ip_lst, x), {:set_neighbours, Enum.filter([Enum.at(ip_lst, x-step), Enum.at(ip_lst, x+step)], fn x -> x != nil end)}) end)
-    #         end)
+              GenServer.cast(Enum.at(ip_lst, x), {:set_neighbours, Enum.filter(
+                  [(if x-step >=0, do: Enum.at(ip_lst, x-step), else: nil),
+                   Enum.at(ip_lst, x+step)], fn x -> x != nil end)}) end)
         if((step-1) > 0) do
             connect_horizontally(ip_lst,step-1)
         end
