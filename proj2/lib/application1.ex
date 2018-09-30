@@ -189,25 +189,31 @@ defmodule Application1 do
         )
 
       "rand2D" ->
+        lst2= Enum.reverse(lst)
         len = trunc(:math.sqrt(num_of_nodes))
+        truncated_list = Enum.take(lst2, trunc(:math.pow(len,2)))  
+
+        list_of_lists = Enum.chunk_every(truncated_list, len)
+
         step = trunc(len / 10)
 
         if(step != 0) do
-          list_of_lists = Enum.chunk_every(lst, len)
           Enum.each(list_of_lists, fn x -> connect_horizontally(x, step) end)
           connect_vertically(list_of_lists, step)
         end
 
       "torus" ->
+        lst2= Enum.reverse(lst)
         len = trunc(:math.sqrt(num_of_nodes))
-        list_of_lists = Enum.chunk_every(lst, len)
+        truncated_list = Enum.take(lst2, trunc(:math.pow(len,2)))  
+
+        list_of_lists = Enum.chunk_every(truncated_list, len)
         Enum.each(list_of_lists, fn x -> connect_horizontally(x) end)
         connect_vertically(list_of_lists)
 
       "3D" ->
         lst2= Enum.reverse(lst)
         n = trunc(:math.pow(num_of_nodes,1/3))
-        
         truncated_list = Enum.take(lst2, trunc(:math.pow(n,3)))  
         array2d= Enum.chunk_every(truncated_list, trunc(:math.pow(n,2)))
         array3d= Enum.map(array2d, fn x -> Enum.chunk_every(x,n) end) |> IO.inspect 
