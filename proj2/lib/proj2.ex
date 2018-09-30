@@ -83,6 +83,9 @@ defmodule Proj2 do
     #  If converged, exit
     if current_map[:current_pushsum_count] <= 0 do
       IO.inspect("Dead #{current_map[:s] / current_map[:w]}")
+
+      # updating ETS cache before exiting
+      :ets.insert(:registry, {self(),"Dead"})
       Process.exit(self(), :normal)
     end
 
