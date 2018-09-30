@@ -12,7 +12,8 @@ defmodule Proj2 do
         :neighbour_list => [],
         :s => node_index,
         :w => 1,
-        :current_pushsum_count => 3
+        :current_pushsum_count => 3,
+        :flag => true
       },
       name: input_name
     )
@@ -89,8 +90,15 @@ defmodule Proj2 do
       Process.exit(self(), :normal)
     end
 
-    sleep(500)
-    GenServer.cast(self(), {:pushsum, [0.0, 0.0, true]})
+    # {_, current_map} =
+    #   if(current_map[:flag]) do
+         sleep(500)
+         GenServer.cast(self(), {:pushsum, [0.0, 0.0, true]})
+    #     Map.get_and_update(current_map, :flag, fn x -> {x, false} end)
+    #   else 
+    #    {"abc", current_map}
+    #   end
+
     {:noreply, current_map}
   end
 
