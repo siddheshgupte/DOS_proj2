@@ -139,14 +139,14 @@ defmodule Application1 do
     lst =
       Supervisor.which_children(supervisor)
       |> Enum.map(fn x -> elem(x, 0) end)
+
     #   |>Enum.sort
 
     # creating ETS cache
-    :ets.new(:registry, [:set, :public,:named_table])
-    
+    :ets.new(:registry, [:set, :public, :named_table])
 
-    start_timer=:erlang.system_time(:millisecond)
-    Task.start_link(__MODULE__, :process, [start_timer,lst])
+    start_timer = :erlang.system_time(:millisecond)
+    Task.start_link(__MODULE__, :process, [start_timer, lst])
 
     case topology do
       "full" ->
@@ -213,24 +213,24 @@ defmodule Application1 do
         array3d= Enum.map(array2d, fn x -> Enum.chunk_every(x,n) end) |> IO.inspect 
         connect_neighbours3d(array3d,n)
     end
-
   end
 
-  def process(start_timer,lst) do
+  def process(start_timer, lst) do
     receive do
-      after
-        5_000 ->
-          lst2 = :ets.tab2list(:registry)  #|> IO.inspect
-      #    length(lst) |> IO.inspect
-      #    length(lst2) |> IO.inspect
+    after
+      5_000 ->
+        len_lst2 =
+          :ets.tab2list(:registry)
+          |> length
 
-          if length(lst2) >= length(lst)-4 do
-            end_timer=:erlang.system_time(:millisecond)
-            end_timer-start_timer |> IO.inspect
-            Process.exit(self(), :normal)
-            end 
-          process(start_timer,lst)
-      end
+        if len_lst2 >= length(lst) - 4 do
+          IO.inspect("Nodes dead #{len_lst2}")
+          end_timer = :erlang.system_time(:millisecond)
+          (end_timer - start_timer) |> IO.inspect()
+          Process.exit(self(), :normal)
+        end
+
+        process(start_timer, lst)
     end
-
+  end
 end

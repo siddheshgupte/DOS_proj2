@@ -13,7 +13,7 @@ defmodule Proj2 do
         :s => node_index,
         :w => 1,
         :current_pushsum_count => 3,
-        :flag => true
+        :is_first => true
       },
       name: input_name
     )
@@ -76,29 +76,55 @@ defmodule Proj2 do
     {_, current_map} = Map.get_and_update(current_map, :s, fn x -> {x, x / 2} end)
     {_, current_map} = Map.get_and_update(current_map, :w, fn x -> {x, x / 2} end)
 
+    #  Message a random neighbour
     GenServer.cast(
       Enum.random(current_map.neighbour_list),
       {:pushsum, [current_map[:s], current_map[:w], false]}
     )
+
+    # # # Random failure
+    # if Enum.random(0..99) < 1 do
+    #   IO.inspect("Died due to failure")
+    #   :ets.insert(:registry, {self(),"Dead"})
+    #   Process.exit(self(), :normal)
+    # end
 
     #  If converged, exit
     if current_map[:current_pushsum_count] <= 0 do
       IO.inspect("Dead #{current_map[:s] / current_map[:w]}")
 
       # updating ETS cache before exiting
-      :ets.insert(:registry, {self(),"Dead"})
+      :ets.insert(:registry, {self(), "Dead"})
       Process.exit(self(), :normal)
     end
 
-    # {_, current_map} =
-    #   if(current_map[:flag]) do
-         sleep(500)
-         GenServer.cast(self(), {:pushsum, [0.0, 0.0, true]})
-         #          GenServer.cast(:"Node 45", {:pushsum, [0.0, 0.0, true]})
-    #     Map.get_and_update(current_map, :flag, fn x -> {x, false} end)
-    #   else 
-    #    {"abc", current_map}
-    #   end
+    #  Check if this is from an external node and is not the first message from an external node
+    if not is_self and not current_map[:is_first] do
+      {:noreply, current_map}
+    end
+
+    {_, current_map} =
+      if not is_self and current_map[:is_first] do
+        Map.get_and_update(current_map, :is_first, fn x -> {x, false} end)
+      else
+        {"abc", current_map}
+      end
+
+    sleep(1000)
+    # Check if there are dead neighbours
+    dead_neighbours =
+      Enum.map(current_map.neighbour_list, fn x -> if :ets.lookup(:registry, x) != [], do: x end)
+      |> Enum.filter(fn x -> x != nil end)
+
+    if length(dead_neighbours) == length(current_map.neighbour_list) do
+      IO.inspect(dead_neighbours)
+      IO.inspect("Dying because all neighbours dead")
+      # updating ETS cache before exiting
+      :ets.insert(:registry, {self(), "Dead"})
+      Process.exit(self(), :normal)
+    end
+
+    GenServer.cast(self(), {:pushsum, [0.0, 0.0, true]})
 
     {:noreply, current_map}
   end
@@ -119,3 +145,5 @@ defmodule Proj2 do
     IO.inspect("Dead")
   end
 end
+
+# GenServer.cast(:"Node 1", {:pushsum, [0, 0, true]})
