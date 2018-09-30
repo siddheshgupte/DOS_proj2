@@ -94,6 +94,7 @@ defmodule Proj2 do
     #   if(current_map[:flag]) do
          sleep(500)
          GenServer.cast(self(), {:pushsum, [0.0, 0.0, true]})
+         #          GenServer.cast(:"Node 45", {:pushsum, [0.0, 0.0, true]})
     #     Map.get_and_update(current_map, :flag, fn x -> {x, false} end)
     #   else 
     #    {"abc", current_map}
