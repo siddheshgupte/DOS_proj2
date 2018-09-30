@@ -87,6 +87,36 @@ defmodule Application1 do
     end)
   end
 
+  # calculate neighbours for 3D network
+  def connect_neighbours3d(lst,n) do
+    0..(n-1)
+    |> Enum.to_list()
+    |> Enum.each(fn x ->
+      0..(n-1)
+      |> Enum.to_list()
+      |> Enum.each(fn y ->
+        0..(n-1)
+        |> Enum.to_list()
+        |> Enum.each( fn z ->
+          GenServer.cast(Enum.at(Enum.at(Enum.at(lst,x), y), z), {:set_neighbours,
+          Enum.filter(
+           #   [Enum.at(Enum.at(list_of_lists, x-step),y), Enum.at(Enum.at(list_of_lists,x+step), y)], 
+           [
+             if(x - 1 >= 0, do: Enum.at(Enum.at(Enum.at(lst,x-1), y), z), else: nil),
+             if(x + 1 < n, do: Enum.at(Enum.at(Enum.at(lst,x+1), y), z), else: nil),
+             if(y - 1 >= 0, do: Enum.at(Enum.at(Enum.at(lst,x), y-1), z), else: nil),
+             if(y + 1 < n, do: Enum.at(Enum.at(Enum.at(lst,x), y+1), z), else: nil),
+             if(z - 1 >= 0, do: Enum.at(Enum.at(Enum.at(lst,x), y), z-1), else: nil),
+             if(z + 1 < n, do: Enum.at(Enum.at(Enum.at(lst,x), y), z+1), else: nil)
+           ],
+           fn x -> x != nil end
+         )})
+      end)
+    end)
+  end)
+
+  end
+
   # Start the application with the number of nodes
   def start(_type, num_of_nodes, topology) do
     # Create a list of children Supervisor.child_spec({Proj2, [10, :"Node 1"]},id: "Node 1")
@@ -159,20 +189,35 @@ defmodule Application1 do
         )
 
       "rand2D" ->
+        lst2= Enum.reverse(lst)
         len = trunc(:math.sqrt(num_of_nodes))
+        truncated_list = Enum.take(lst2, trunc(:math.pow(len,2)))  
+
+        list_of_lists = Enum.chunk_every(truncated_list, len)
+
         step = trunc(len / 10)
 
         if(step != 0) do
-          list_of_lists = Enum.chunk_every(lst, len)
           Enum.each(list_of_lists, fn x -> connect_horizontally(x, step) end)
           connect_vertically(list_of_lists, step)
         end
 
       "torus" ->
+        lst2= Enum.reverse(lst)
         len = trunc(:math.sqrt(num_of_nodes))
-        list_of_lists = Enum.chunk_every(lst, len)
+        truncated_list = Enum.take(lst2, trunc(:math.pow(len,2)))  
+
+        list_of_lists = Enum.chunk_every(truncated_list, len)
         Enum.each(list_of_lists, fn x -> connect_horizontally(x) end)
         connect_vertically(list_of_lists)
+
+      "3D" ->
+        lst2= Enum.reverse(lst)
+        n = trunc(:math.pow(num_of_nodes,1/3))
+        truncated_list = Enum.take(lst2, trunc(:math.pow(n,3)))  
+        array2d= Enum.chunk_every(truncated_list, trunc(:math.pow(n,2)))
+        array3d= Enum.map(array2d, fn x -> Enum.chunk_every(x,n) end) |> IO.inspect 
+        connect_neighbours3d(array3d,n)
     end
     IO.inspect GenServer.cast(:"Node 1", {:pushsum, [0, 0, true]})
 
