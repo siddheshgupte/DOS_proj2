@@ -174,6 +174,8 @@ defmodule Application1 do
         Enum.each(list_of_lists, fn x -> connect_horizontally(x) end)
         connect_vertically(list_of_lists)
     end
+    IO.inspect GenServer.cast(:"Node 1", {:pushsum, [0, 0, true]})
+
   end
 
   def process(start_timer, lst) do
