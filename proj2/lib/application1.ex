@@ -10,20 +10,19 @@ defmodule Application1 do
     case Enum.at(args,2) do
       "pushsum" -> 
         GenServer.cast(:"Node 1", {:pushsum, [0, 0, true]})
-         IO.inspect "hello"
       "gossip" ->
         GenServer.cast(:"Node 1", :gossip)
-        IO.inspect "hello"
     end
-
-   loop()
+    receive do
+    end
+  #  loop()
   end
 
-  def loop() do
-    if(IO.puts "" != "^C") do
-      loop()
-    end
-  end
+  # def loop() do
+  #   if(IO.gets("") != "^C") do
+  #     loop()
+  #   end
+  # end
 
   def connect_horizontally(ip_lst, step) do
     0..(length(ip_lst) - 1)
@@ -253,7 +252,7 @@ defmodule Application1 do
           :ets.tab2list(:registry)
           |> length
 
-        if len_lst2 >= length(lst) - 4 do
+        if len_lst2 >= length(lst)  do
           IO.inspect("Nodes dead #{len_lst2}")
           end_timer = :erlang.system_time(:millisecond)
           (end_timer - start_timer) |> IO.inspect()

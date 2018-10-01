@@ -13,7 +13,8 @@ defmodule Proj2 do
         :s => node_index,
         :w => 1,
         :current_pushsum_count => 3,
-        :is_first => true
+        :is_first => true,
+        :name => input_name
       },
       name: input_name
     )
@@ -50,6 +51,9 @@ defmodule Proj2 do
   end
 
   def handle_cast({:pushsum, [input_s, input_w, is_self]}, current_map) do
+
+    # IO.inspect current_map.name
+    
     #  Calculate previous ratio
     prev_ratio = current_map[:s] / current_map[:w]
 
@@ -85,7 +89,7 @@ defmodule Proj2 do
     # # # Random failure
     # if Enum.random(0..99) < 1 do
     #   IO.inspect("Died due to failure")
-    #   :ets.insert(:registry, {self(),"Dead"})
+    #   :ets.insert(:registry, {current_map.name,"Dead"})
     #   Process.exit(self(), :normal)
     # end
 
@@ -94,7 +98,7 @@ defmodule Proj2 do
       IO.inspect("Dead #{current_map[:s] / current_map[:w]}")
 
       # updating ETS cache before exiting
-      :ets.insert(:registry, {self(), "Dead"})
+      :ets.insert(:registry, {current_map.name, "Dead"})
       Process.exit(self(), :normal)
     end
 
@@ -120,7 +124,7 @@ defmodule Proj2 do
       IO.inspect(dead_neighbours)
       IO.inspect("Dying because all neighbours dead")
       # updating ETS cache before exiting
-      :ets.insert(:registry, {self(), "Dead"})
+      :ets.insert(:registry, {current_map.name, "Dead"})
       Process.exit(self(), :normal)
     end
 
