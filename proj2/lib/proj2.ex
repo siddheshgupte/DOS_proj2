@@ -4,7 +4,7 @@ defmodule Proj2 do
   use GenServer, restart: :temporary
 
   # External API
-  def start_link([gossip_limit, input_name, node_index]) do
+  def start_link([gossip_limit, input_name, node_index, failure]) do
     GenServer.start_link(
       __MODULE__,
       %{
@@ -14,7 +14,8 @@ defmodule Proj2 do
         :w => 1,
         :current_pushsum_count => 3,
         :is_first => true,
-        :name => input_name
+        :name => input_name,
+        :failure_rate => failure
       },
       name: input_name
     )
@@ -25,29 +26,64 @@ defmodule Proj2 do
     {:ok, initial_map}
   end
 
-  def handle_call(:gossip, _from, current_map) do
-    {_, updated_map} =
+  def handle_cast({:gossip, is_self}, current_map) do
+
+    {_, current_map} =
+    if not is_self do
+      #  Check for convergence
       Map.get_and_update(current_map, :current_gossip_count, fn x -> {x, x - 1} end)
+    else
+      {"abc", current_map}
+    end    
 
-    {:reply, current_map, updated_map}
-  end
-
-  def handle_cast(:gossip, current_map) do
     IO.puts(current_map.current_gossip_count)
 
-    if current_map.current_gossip_count <= 0 do
-      # GenServer.cast(self(), :kill_self)
+    #Message a random neighbour
+    GenServer.cast(Enum.random(current_map.neighbour_list), {:gossip,false})
+
+    # # # Random failure
+    if Enum.random(0..99) < current_map.failure_rate do
+      IO.inspect("Died due to failure")
+      :ets.insert(:registry, {current_map.name,"Dead"})
       Process.exit(self(), :normal)
     end
 
-    GenServer.cast(Enum.random(current_map.neighbour_list), :gossip)
+    #  If converged, exit    
+    if current_map.current_gossip_count <= 0 do
+      # updating ETS cache before exiting
+      :ets.insert(:registry, {current_map.name, "Dead"}) 
+      Process.exit(self(), :normal)
+    end
 
-    {_, updated_map} =
-      Map.get_and_update(current_map, :current_gossip_count, fn x -> {x, x - 1} end)
+    #  Check if this is from an external node and is not the first message from an external node
+    if not is_self and not current_map[:is_first] do
+      {:noreply, current_map}
+    end
+
+    {_, current_map} =
+    if not is_self and current_map[:is_first] do
+      Map.get_and_update(current_map, :is_first, fn x -> {x, false} end)
+    else
+      {"abc", current_map}
+    end    
 
     sleep(100)
-    GenServer.cast(self(), :gossip)
-    {:noreply, updated_map}
+    # Check if there are dead neighbours
+    dead_neighbours =
+      Enum.map(current_map.neighbour_list, fn x -> if :ets.lookup(:registry, x) != [], do: x end)
+      |> Enum.filter(fn x -> x != nil end)
+
+    if length(dead_neighbours) == length(current_map.neighbour_list) do
+      IO.inspect(dead_neighbours)
+      IO.inspect("Dying because all neighbours dead")
+      # updating ETS cache before exiting
+      :ets.insert(:registry, {current_map.name, "Dead"})
+      Process.exit(self(), :normal)
+    end
+
+    GenServer.cast(self(), {:gossip,true})
+
+    {:noreply, current_map}
   end
 
   def handle_cast({:pushsum, [input_s, input_w, is_self]}, current_map) do
@@ -87,11 +123,11 @@ defmodule Proj2 do
     )
 
     # # # Random failure
-    # if Enum.random(0..99) < 1 do
-    #   IO.inspect("Died due to failure")
-    #   :ets.insert(:registry, {current_map.name,"Dead"})
-    #   Process.exit(self(), :normal)
-    # end
+    if Enum.random(0..99) < current_map.failure_rate do
+      IO.inspect("Died due to failure")
+      :ets.insert(:registry, {current_map.name,"Dead"})
+      Process.exit(self(), :normal)
+    end
 
     #  If converged, exit
     if current_map[:current_pushsum_count] <= 0 do
@@ -151,3 +187,5 @@ defmodule Proj2 do
 end
 
 # GenServer.cast(:"Node 1", {:pushsum, [0, 0, true]})
+# mix escript.build
+# escript proj2 10 full gossip -1

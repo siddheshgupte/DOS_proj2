@@ -5,13 +5,13 @@ defmodule Application1 do
   @gossip_limit 10
 
   def main(args \\ []) do
-    {_,lst}= Application1.start(:abc, String.to_integer(Enum.at(args,0)), Enum.at(args,1))
+    {_,lst}= Application1.start(:abc, String.to_integer(Enum.at(args,0)), Enum.at(args,1), String.to_integer(Enum.at(args,3)))
 
     case Enum.at(args,2) do
       "pushsum" -> 
         GenServer.cast(:"Node 1", {:pushsum, [0, 0, true]})
       "gossip" ->
-        GenServer.cast(:"Node 1", :gossip)
+        GenServer.cast(:"Node 1", {:gossip, true})
     end
 
     start_timer = :erlang.system_time(:millisecond)
@@ -139,14 +139,14 @@ defmodule Application1 do
   end
 
   # Start the application with the number of nodes
-  def start(_type, num_of_nodes, topology) do
+  def start(_type, num_of_nodes, topology, failure) do
     # Create a list of children Supervisor.child_spec({Proj2, [10, :"Node 1"]},id: "Node 1")
     children =
       1..num_of_nodes
       |> Enum.to_list()
       |> Enum.map(fn x ->
         Supervisor.child_spec(
-          {Proj2, [@gossip_limit, String.to_atom("Node #{x}"), x]},
+          {Proj2, [@gossip_limit, String.to_atom("Node #{x}"), x, failure]},
           id: String.to_atom("Node #{x}")
         )
       end)
@@ -245,7 +245,7 @@ defmodule Application1 do
   def process(start_timer, lst,pid) do
     receive do
     after
-      5_000 ->
+      5_00 ->
         len_lst2 =
           :ets.tab2list(:registry)
           |> length
