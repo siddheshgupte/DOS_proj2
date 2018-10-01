@@ -3,6 +3,28 @@ defmodule Application1 do
   use Task
 
   @gossip_limit 10
+
+  def main(args \\ []) do
+    Application1.start(:abc, String.to_integer(Enum.at(args,0)), Enum.at(args,1))
+
+    case Enum.at(args,2) do
+      "pushsum" -> 
+        GenServer.cast(:"Node 1", {:pushsum, [0, 0, true]})
+         IO.inspect "hello"
+      "gossip" ->
+        GenServer.cast(:"Node 1", :gossip)
+        IO.inspect "hello"
+    end
+
+   loop()
+  end
+
+  def loop() do
+    if(IO.puts "" != "^C") do
+      loop()
+    end
+  end
+
   def connect_horizontally(ip_lst, step) do
     0..(length(ip_lst) - 1)
     |> Enum.to_list()
@@ -145,8 +167,7 @@ defmodule Application1 do
     # creating ETS cache
     :ets.new(:registry, [:set, :public, :named_table])
 
-    start_timer = :erlang.system_time(:millisecond)
-    Task.start_link(__MODULE__, :process, [start_timer, lst])
+
 
     case topology do
       "full" ->
@@ -219,8 +240,9 @@ defmodule Application1 do
         array3d= Enum.map(array2d, fn x -> Enum.chunk_every(x,n) end) |> IO.inspect 
         connect_neighbours3d(array3d,n)
     end
-    IO.inspect GenServer.cast(:"Node 1", {:pushsum, [0, 0, true]})
 
+    start_timer = :erlang.system_time(:millisecond)
+    Task.start_link(__MODULE__, :process, [start_timer, lst])
   end
 
   def process(start_timer, lst) do
