@@ -5,7 +5,7 @@ defmodule Application1 do
   @gossip_limit 10
 
   def main(args \\ []) do
-    Application1.start(:abc, String.to_integer(Enum.at(args,0)), Enum.at(args,1))
+    {_,lst}= Application1.start(:abc, String.to_integer(Enum.at(args,0)), Enum.at(args,1))
 
     case Enum.at(args,2) do
       "pushsum" -> 
@@ -13,16 +13,16 @@ defmodule Application1 do
       "gossip" ->
         GenServer.cast(:"Node 1", :gossip)
     end
-    receive do
-    end
-  #  loop()
-  end
 
-  # def loop() do
-  #   if(IO.gets("") != "^C") do
-  #     loop()
-  #   end
-  # end
+    start_timer = :erlang.system_time(:millisecond)
+    Task.start_link(__MODULE__, :process, [start_timer, lst,self()])
+
+    receive do
+      {:hi, message} ->
+        IO.puts message
+    end
+
+  end
 
   def connect_horizontally(ip_lst, step) do
     0..(length(ip_lst) - 1)
@@ -239,12 +239,10 @@ defmodule Application1 do
         array3d= Enum.map(array2d, fn x -> Enum.chunk_every(x,n) end) |> IO.inspect 
         connect_neighbours3d(array3d,n)
     end
-
-    start_timer = :erlang.system_time(:millisecond)
-    Task.start_link(__MODULE__, :process, [start_timer, lst])
+    {":ok",lst} # returning lst to main() for timer function
   end
 
-  def process(start_timer, lst) do
+  def process(start_timer, lst,pid) do
     receive do
     after
       5_000 ->
@@ -256,10 +254,11 @@ defmodule Application1 do
           IO.inspect("Nodes dead #{len_lst2}")
           end_timer = :erlang.system_time(:millisecond)
           (end_timer - start_timer) |> IO.inspect()
+          send pid, {:hi, "Successful"} # send message back to main() for termination
           Process.exit(self(), :normal)
         end
 
-        process(start_timer, lst)
+        process(start_timer, lst,pid)
     end
   end
 end
