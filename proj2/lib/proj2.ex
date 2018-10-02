@@ -188,4 +188,4 @@ end
 
 # GenServer.cast(:"Node 1", {:pushsum, [0, 0, true]})
 # mix escript.build
-# escript proj2 10 full gossip -1
+# escript proj2 100 rand2D gossip -1

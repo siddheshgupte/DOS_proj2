@@ -16,7 +16,7 @@ defmodule Application1 do
 
     start_timer = :erlang.system_time(:millisecond)
     Task.start_link(__MODULE__, :process, [start_timer, lst,self()])
-
+    
     receive do
       {:hi, message} ->
         IO.puts message
@@ -173,7 +173,8 @@ defmodule Application1 do
         # For Fully connected network
         # Set neighbours of the current node
         Enum.each(lst, fn x -> GenServer.cast(x, {:set_neighbours, List.delete(lst, x)}) end)
-
+        {":ok",lst}
+        
       "line" ->
         1..(num_of_nodes - 2)
         |> Enum.to_list()
@@ -190,6 +191,7 @@ defmodule Application1 do
           String.to_atom("Node #{num_of_nodes}"),
           {:set_neighbours, [String.to_atom("Node #{num_of_nodes - 1}")]}
         )
+        {":ok",lst}
 
       "imp2D" ->
         1..(num_of_nodes - 2)
@@ -207,6 +209,7 @@ defmodule Application1 do
           String.to_atom("Node #{num_of_nodes}"),
           {:set_neighbours, [String.to_atom("Node #{num_of_nodes - 1}"), Enum.random(lst)]}
         )
+        {":ok",lst}
 
       "rand2D" ->
         lst2= Enum.reverse(lst)
@@ -221,6 +224,7 @@ defmodule Application1 do
           Enum.each(list_of_lists, fn x -> connect_horizontally(x, step) end)
           connect_vertically(list_of_lists, step)
         end
+        {":ok",truncated_list}
 
       "torus" ->
         lst2= Enum.reverse(lst)
@@ -230,6 +234,7 @@ defmodule Application1 do
         list_of_lists = Enum.chunk_every(truncated_list, len)
         Enum.each(list_of_lists, fn x -> connect_horizontally(x) end)
         connect_vertically(list_of_lists)
+        {":ok",truncated_list}
 
       "3D" ->
         lst2= Enum.reverse(lst)
@@ -238,8 +243,9 @@ defmodule Application1 do
         array2d= Enum.chunk_every(truncated_list, trunc(:math.pow(n,2)))
         array3d= Enum.map(array2d, fn x -> Enum.chunk_every(x,n) end) |> IO.inspect 
         connect_neighbours3d(array3d,n)
+        {":ok",truncated_list}
     end
-    {":ok",lst} # returning lst to main() for timer function
+    
   end
 
   def process(start_timer, lst,pid) do
