@@ -41,12 +41,7 @@ defmodule Proj2 do
     #Message a random neighbour
     GenServer.cast(Enum.random(current_map.neighbour_list), {:gossip,false})
 
-    # # # Random failure
-    if Enum.random(0..99) < current_map.failure_rate do
-      IO.inspect("Died due to failure")
-      :ets.insert(:registry, {current_map.name,"Dead"})
-      Process.exit(self(), :normal)
-    end
+
 
     #  If converged, exit    
     if current_map.current_gossip_count <= 0 do
@@ -62,6 +57,12 @@ defmodule Proj2 do
 
     {_, current_map} =
     if not is_self and current_map[:is_first] do
+          # # # Random failure
+    if Enum.random(0..99) < current_map.failure_rate do
+      IO.inspect("Died due to failure")
+      :ets.insert(:registry, {current_map.name,"Dead"})
+      Process.exit(self(), :normal)
+    end
       Map.get_and_update(current_map, :is_first, fn x -> {x, false} end)
     else
       {"abc", current_map}
@@ -122,12 +123,7 @@ defmodule Proj2 do
       {:pushsum, [current_map[:s], current_map[:w], false]}
     )
 
-    # # # Random failure
-    if Enum.random(0..99) < current_map.failure_rate do
-      IO.inspect("Died due to failure")
-      :ets.insert(:registry, {current_map.name,"Dead"})
-      Process.exit(self(), :normal)
-    end
+
 
     #  If converged, exit
     if current_map[:current_pushsum_count] <= 0 do
@@ -145,12 +141,20 @@ defmodule Proj2 do
 
     {_, current_map} =
       if not is_self and current_map[:is_first] do
+            # # # Random failure
+        if Enum.random(0..99) < current_map.failure_rate do
+          IO.inspect("Died due to failure")
+          :ets.insert(:registry, {current_map.name,"Dead"})
+          Process.exit(self(), :normal)
+        end
+
         Map.get_and_update(current_map, :is_first, fn x -> {x, false} end)
+        
       else
         {"abc", current_map}
       end
 
-    sleep(1000)
+    sleep(100)
     # Check if there are dead neighbours
     dead_neighbours =
       Enum.map(current_map.neighbour_list, fn x -> if :ets.lookup(:registry, x) != [], do: x end)
